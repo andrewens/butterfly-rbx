@@ -4,3 +4,7 @@
 # Roblox Studio lock files
 /*.rbxlx.lock
 /*.rbxl.lock
+
+# Test drivers
+/src/server-script-service
+/src/starter-player-scripts
