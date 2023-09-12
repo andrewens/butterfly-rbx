@@ -1,5 +1,6 @@
 --[[
-    Wrap a table such that you can assign callbacks to when changes
+    Wrap a table such that you can assign callbacks to when changes.
+    Callbacks are called when you connect them, btw.
 ]]
 
 local ALL_CHANGES_KEY = "__ALL_CHANGES__"
@@ -44,8 +45,13 @@ local function changed(self, key, callback)
 		self.__callbacks[key] = {}
 	end
 
-	-- add callback to that table, & return disconnect() method
+	-- add callback to that table
 	self.__callbacks[key][callback] = true
+
+    -- call callback on current value
+    callback(key, self[key])
+
+    -- return disconnect() method
 	return function()
 		self.__callbacks[key][callback] = nil
 	end
