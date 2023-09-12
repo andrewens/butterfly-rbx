@@ -15,7 +15,7 @@ local Maid = require(script:FindFirstChild("maid"))
 local State = ProxyTable({
 	selectionModal = false,
 	testIndex = 1,
-	numTests = 2,
+	numTests = 5,
 })
 
 function State.nextTest()
@@ -47,7 +47,9 @@ local function initGui()
 	ScreenGui = Instance.new("ScreenGui")
 	ScreenGui.DisplayOrder = math.huge
 	ScreenGui.Parent = LocalPlayer.PlayerGui
+    GuiMaid(ScreenGui)
 
+    -- render testIndex
 	local TextLabel = Instance.new("TextLabel")
 	TextLabel.Parent = ScreenGui
 	TextLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -55,11 +57,35 @@ local function initGui()
 	TextLabel.Font = Enum.Font.GothamBlack
 	TextLabel.Text = "ScreenGui!"
 
-	GuiMaid(ScreenGui)
+    GuiMaid(State:changed("testIndex", function(_, testIndex)
+        TextLabel.Text = "TestIndex: " .. testIndex
+    end))
+
+    -- control testIndex with buttons
+    local ButtonContainer = Instance.new("Frame")
+    ButtonContainer.Parent = ScreenGui
+    ButtonContainer.Size = UDim2.new(0, 400, 0, 400)
+    ButtonContainer.Position = UDim2.new(0, 0, 0.5, 0)
+    ButtonContainer.AnchorPoint = Vector2.new(0, 0.5)
+
+    local LeftButton = Instance.new("TextButton")
+    LeftButton.Size = UDim2.new(0.5, 0, 0, 50)
+    LeftButton.TextScaled = true
+    LeftButton.Position = UDim2.new(0.5, 0, 1, 0)
+
+    LeftButton.Parent = ButtonContainer
+    LeftButton.AnchorPoint = Vector2.new(1, 1)
+    LeftButton.Text = "< PREV"
+    LeftButton.Activated:Connect(State.prevTest)
+
+    local RightButton = LeftButton:Clone()
+    RightButton.Parent = ButtonContainer
+    RightButton.AnchorPoint = Vector2.new(0, 1)
+    RightButton.Text = "NEXT >"
+    RightButton.Activated:Connect(State.nextTest)
 
 	return GuiMaid
 end
-local function renderUpdate(testIndex) end
 
 -- variables
 local ButterflyMaid = Maid()
@@ -69,10 +95,6 @@ local butterfly = {}
 
 function butterfly.run()
 	ButterflyMaid(initGui())
-	ButterflyMaid(State:changed("testIndex", function(_, testIndex)
-		renderUpdate(testIndex)
-	end))
-
 	return ButterflyMaid
 end
 function butterfly.stop()
