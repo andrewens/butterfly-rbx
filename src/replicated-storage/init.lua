@@ -13,7 +13,7 @@ local Maid = require(script:FindFirstChild("maid"))
 
 -- state
 local State = ProxyTable({
-	selectionModal = false,
+	selectTestModal = false,
 	testIndex = 0,
 	numTests = 5,
 })
@@ -39,6 +39,16 @@ function State.selectTest(newTestIndex)
 	end
 
 	State.testIndex = newTestIndex
+end
+
+function State.viewAllTests()
+    State.selectTestModal = true
+end
+function State.hideAllTests()
+    State.selectTestModal = false
+end
+function State.toggleViewAllTests()
+    State.selectTestModal = not State.selectTestModal
 end
 
 -- rendering
@@ -77,7 +87,7 @@ local function initGui()
     local LeftButton = Instance.new("TextButton")
     LeftButton.Size = UDim2.new(0.5, 0, 0, 50)
     LeftButton.TextScaled = true
-    LeftButton.Position = UDim2.new(0.5, 0, 1, 0)
+    LeftButton.Position = UDim2.new(0.5, 0, 1, -50)
 
     LeftButton.Parent = ButtonContainer
     LeftButton.AnchorPoint = Vector2.new(1, 1)
@@ -89,6 +99,52 @@ local function initGui()
     RightButton.AnchorPoint = Vector2.new(0, 1)
     RightButton.Text = "NEXT >"
     RightButton.Activated:Connect(State.nextTest)
+
+    -- button brings up selection modal
+    local SelectTestButton = Instance.new("TextButton")
+    SelectTestButton.Parent = ButtonContainer
+    SelectTestButton.Size = UDim2.new(1, 0, 0, 50)
+    SelectTestButton.AnchorPoint = Vector2.new(0, 1)
+    SelectTestButton.Position = UDim2.new(0, 0, 1, 0)
+    SelectTestButton.TextScaled = true
+    SelectTestButton.Text = "ALL TESTS"
+    SelectTestButton.Activated:Connect(State.toggleViewAllTests)
+
+    -- view all tests (modal)
+    local ViewAllTestsMaid = Maid()
+    GuiMaid(ViewAllTestsMaid)
+    GuiMaid(State:changed("selectTestModal", function(_, viewAllTests)
+        ViewAllTestsMaid:DoCleaning()
+        if not viewAllTests then
+            return
+        end
+        
+        local Background = Instance.new("Frame")
+        Background.Parent = ScreenGui
+        Background.Size = UDim2.new(1, 0, 1, 0)
+        ViewAllTestsMaid(Background)
+
+        local TitleText = Instance.new("TextLabel")
+        TitleText.Parent = Background
+        TitleText.Size = UDim2.new(1, 0, 0, 100)
+        TitleText.Position = UDim2.new(0, 0, 0, 0)
+        TitleText.TextScaled = true
+        TitleText.Text = "ALL TESTS"
+
+        local TestContainer = Instance.new("ScrollingFrame")
+        TestContainer.Size = UDim2.new(1, -50, 1, -200)
+        TestContainer.Position = UDim2.new(0.5, 0, 1, -50)
+        TestContainer.AnchorPoint = Vector2.new(0.5, 1)
+
+        local ReturnButton = Instance.new("TextButton")
+        ReturnButton.Parent = Background
+        ReturnButton.Size = UDim2.new(0, 200, 0, 50)
+        ReturnButton.Position = UDim2.new(0.5, 0, 1, 0)
+        ReturnButton.AnchorPoint = Vector2.new(0.5, 1)
+        ReturnButton.TextScaled = true
+        ReturnButton.Text = "BACK"
+        ReturnButton.Activated:Connect(State.hideAllTests)
+    end))
 
     -- render BEGIN / END screens as modals
     local IntroMaid = Maid()
