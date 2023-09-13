@@ -53,25 +53,26 @@ local function initGui()
 	ScreenGui.Parent = LocalPlayer.PlayerGui
     GuiMaid(ScreenGui)
 
-    -- render testIndex
-	local TextLabel = Instance.new("TextLabel")
-	TextLabel.Parent = ScreenGui
-	TextLabel.Size = UDim2.new(1, 0, 1, 0)
-	TextLabel.TextScaled = true
-	TextLabel.Font = Enum.Font.GothamBlack
-	TextLabel.Text = "ScreenGui!"
-
-    GuiMaid(State:changed("testIndex", function(_, testIndex)
-        TextLabel.Text = "TestIndex: " .. testIndex
-    end))
-
-    -- control testIndex with buttons
+    -- test control palette
     local ButtonContainer = Instance.new("Frame")
     ButtonContainer.Parent = ScreenGui
     ButtonContainer.Size = UDim2.new(0, 400, 0, 400)
     ButtonContainer.Position = UDim2.new(0, 0, 0.5, 0)
     ButtonContainer.AnchorPoint = Vector2.new(0, 0.5)
 
+    -- render testIndex
+	local IndexLabel = Instance.new("TextLabel")
+	IndexLabel.Parent = ButtonContainer
+	IndexLabel.Size = UDim2.new(1, 0, 0, 50)
+	IndexLabel.TextScaled = true
+	IndexLabel.Font = Enum.Font.GothamBlack
+	IndexLabel.Text = "ScreenGui!"
+
+    GuiMaid(State:changed("testIndex", function(_, testIndex)
+        IndexLabel.Text = "TestIndex: " .. testIndex
+    end))
+
+    -- control testIndex with buttons
     local LeftButton = Instance.new("TextButton")
     LeftButton.Size = UDim2.new(0.5, 0, 0, 50)
     LeftButton.TextScaled = true
