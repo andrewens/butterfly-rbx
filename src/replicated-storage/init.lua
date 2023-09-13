@@ -14,7 +14,7 @@ local Maid = require(script:FindFirstChild("maid"))
 -- state
 local State = ProxyTable({
 	selectionModal = false,
-	testIndex = 1,
+	testIndex = 0,
 	numTests = 5,
 })
 
@@ -22,6 +22,10 @@ function State.nextTest()
 	State.selectTest(State.testIndex + 1)
 end
 function State.prevTest()
+    if State.testIndex == -1 then
+        State.selectTest(State.numTests)
+        return
+    end
 	State.selectTest(State.testIndex - 1)
 end
 function State.selectTest(newTestIndex)
@@ -83,6 +87,64 @@ local function initGui()
     RightButton.AnchorPoint = Vector2.new(0, 1)
     RightButton.Text = "NEXT >"
     RightButton.Activated:Connect(State.nextTest)
+
+    -- render BEGIN / END screens as modals
+    local IntroMaid = Maid()
+    GuiMaid(IntroMaid)
+    GuiMaid(State:changed("testIndex", function(_, testIndex)
+        IntroMaid:DoCleaning()
+
+        -- do nothing if normal test
+        if testIndex > 0 then
+            return
+        end
+
+        local Background = Instance.new("Frame")
+        Background.Parent = ScreenGui
+        Background.Size = UDim2.new(1, 0, 1, 0)
+        IntroMaid(Background)
+
+        local TitleText = Instance.new("TextLabel")
+        TitleText.Parent = Background
+        TitleText.Size = UDim2.new(1, 0, 0, 100)
+        TitleText.Position = UDim2.new(0, 0, 0, 0)
+        TitleText.TextScaled = true
+
+        local Button = Instance.new("TextButton")
+        Button.Parent = Background
+        Button.Size = UDim2.new(0, 200, 0, 50)
+        Button.Position = UDim2.new(0.5, 0, 1, 0)
+        Button.AnchorPoint = Vector2.new(0.5, 1)
+        Button.TextScaled = true
+
+        --[[
+            TODO -- change in progress
+
+            Render BEGIN and END screens that say "begin" and "end" 
+            and have buttons...
+
+            BEGIN has a "begin" button.
+            END has a "prev" button.
+        ]]
+
+        -- render BEGIN screen (returns)
+        if testIndex == 0 then
+            TitleText.Text = "TEST INTRO"
+            Button.Text = "BEGIN"
+            IntroMaid(Button.Activated:Connect(State.nextTest))
+
+            return
+        end
+
+        -- render END screen (returns)
+        if testIndex == -1 then
+            TitleText.Text = "TEST FINISHED"
+            Button.Text = "< PREV"
+            IntroMaid(Button.Activated:Connect(State.prevTest))
+
+            return
+        end
+    end))
 
 	return GuiMaid
 end
