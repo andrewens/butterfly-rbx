@@ -1,28 +1,18 @@
-local RunService = game:GetService("RunService")
-
 --[[ SERVER ]]
---
+local RunService = game:GetService("RunService")
 if RunService:IsServer() then
 	error("Attempt to require butterfly on the server")
 end
 
 --[[ CLIENT ]]
---
 local Maid = require(script:FindFirstChild("maid"))
 local AppState = require(script:FindFirstChild("app-state"))
 
--- rendering
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local GuiMaid = Maid()
-local ScreenGui
-
-local function initGui()
-	ScreenGui = Instance.new("ScreenGui")
-	ScreenGui.DisplayOrder = math.huge
-	ScreenGui.IgnoreGuiInset = true
-	ScreenGui.Parent = LocalPlayer.PlayerGui
-	GuiMaid(ScreenGui)
+local function initTestController(ScreenGui)
+	--[[
+		Users use the TestController to label a test as "PASSED" or "FAILED"
+		and also move between tests
+	]]
 
 	-- test control palette
 	local ButtonContainer = Instance.new("Frame")
@@ -30,6 +20,9 @@ local function initGui()
 	ButtonContainer.Size = UDim2.new(0, 400, 0, 400)
 	ButtonContainer.Position = UDim2.new(0, 0, 0.5, 0)
 	ButtonContainer.AnchorPoint = Vector2.new(0, 0.5)
+
+	local GuiMaid = Maid()
+	GuiMaid(ButtonContainer)
 
 	-- render testIndex
 	local IndexLabel = Instance.new("TextLabel")
@@ -70,11 +63,19 @@ local function initGui()
 	SelectTestButton.Text = "ALL TESTS"
 	SelectTestButton.Activated:Connect(AppState.toggleViewAllTests)
 
-	-- view all tests (modal)
-	local ViewAllTestsMaid = Maid()
-	GuiMaid(ViewAllTestsMaid)
+	return GuiMaid
+end
+local function initTestSelectionModal(ScreenGui)
+	--[[
+		TestSelection modal shows list of all tests & lets user goto any of them
+		It pops up when AppState.selectTestModal is true
+	]]
+
+	local ModalMaid = Maid()
+	local GuiMaid = Maid()
+	GuiMaid(ModalMaid)
 	GuiMaid(AppState:changed("selectTestModal", function(_, viewAllTests)
-		ViewAllTestsMaid:DoCleaning()
+		ModalMaid:DoCleaning()
 		if not viewAllTests then
 			return
 		end
@@ -82,7 +83,7 @@ local function initGui()
 		local Background = Instance.new("Frame")
 		Background.Parent = ScreenGui
 		Background.Size = UDim2.new(1, 0, 1, 0)
-		ViewAllTestsMaid(Background)
+		ModalMaid(Background)
 
 		local TitleText = Instance.new("TextLabel")
 		TitleText.Parent = Background
@@ -106,11 +107,19 @@ local function initGui()
 		ReturnButton.Activated:Connect(AppState.hideAllTests)
 	end))
 
-	-- render BEGIN / END screens as modals
-	local IntroMaid = Maid()
-	GuiMaid(IntroMaid)
+	return GuiMaid
+end
+local function initBookEndScreens(ScreenGui)
+	--[[
+		BookEnd screens are the Intro screen at the beginning and End screen at the end.
+		They come up when AppState.testIndex == 0 or AppState.testIndex == -1 (signifies the end).
+	]]
+
+	local ModalMaid = Maid()
+	local GuiMaid = Maid()
+	GuiMaid(ModalMaid)
 	GuiMaid(AppState:changed("testIndex", function(_, testIndex)
-		IntroMaid:DoCleaning()
+		ModalMaid:DoCleaning()
 
 		-- do nothing if normal test
 		if testIndex > 0 then
@@ -120,7 +129,7 @@ local function initGui()
 		local Background = Instance.new("Frame")
 		Background.Parent = ScreenGui
 		Background.Size = UDim2.new(1, 0, 1, 0)
-		IntroMaid(Background)
+		ModalMaid(Background)
 
 		local TitleText = Instance.new("TextLabel")
 		TitleText.Parent = Background
@@ -135,21 +144,11 @@ local function initGui()
 		Button.AnchorPoint = Vector2.new(0.5, 1)
 		Button.TextScaled = true
 
-		--[[
-            TODO -- change in progress
-
-            Render BEGIN and END screens that say "begin" and "end" 
-            and have buttons...
-
-            BEGIN has a "begin" button.
-            END has a "prev" button.
-        ]]
-
 		-- render BEGIN screen (returns)
 		if testIndex == 0 then
 			TitleText.Text = "TEST INTRO"
 			Button.Text = "BEGIN"
-			IntroMaid(Button.Activated:Connect(AppState.nextTest))
+			ModalMaid(Button.Activated:Connect(AppState.nextTest))
 
 			return
 		end
@@ -158,7 +157,7 @@ local function initGui()
 		if testIndex == -1 then
 			TitleText.Text = "TEST FINISHED"
 			Button.Text = "< PREV"
-			IntroMaid(Button.Activated:Connect(AppState.prevTest))
+			ModalMaid(Button.Activated:Connect(AppState.prevTest))
 
 			return
 		end
@@ -166,15 +165,36 @@ local function initGui()
 
 	return GuiMaid
 end
+local function initGui(GuiContainer)
+	--[[
+		Initialize butterfly's User Interface in the given GuiContainer parent.
+		Currently only supports PlayerGuis.
+	]]
 
--- variables
-local ButterflyMaid = Maid()
+	local ScreenGui = Instance.new("ScreenGui")
+	ScreenGui.DisplayOrder = math.huge
+	ScreenGui.IgnoreGuiInset = true
+	ScreenGui.Parent = GuiContainer
+
+	local GuiMaid = Maid()
+	GuiMaid(ScreenGui)
+	GuiMaid(initTestController(ScreenGui))
+	GuiMaid(initTestSelectionModal(ScreenGui))
+	GuiMaid(initBookEndScreens(ScreenGui))
+
+	return GuiMaid
+end
 
 -- public
+local ButterflyMaid = Maid()
 local butterfly = {}
 
 function butterfly.run()
-	ButterflyMaid(initGui())
+	-- temporary player gui lookup -- this should be specified by params of this method.
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+
+	ButterflyMaid(initGui(LocalPlayer.PlayerGui))
 	return ButterflyMaid
 end
 function butterfly.stop()
