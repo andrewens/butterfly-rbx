@@ -50,6 +50,7 @@ local ScreenGui
 local function initGui()
 	ScreenGui = Instance.new("ScreenGui")
 	ScreenGui.DisplayOrder = math.huge
+    ScreenGui.IgnoreGuiInset = true
 	ScreenGui.Parent = LocalPlayer.PlayerGui
     GuiMaid(ScreenGui)
 
