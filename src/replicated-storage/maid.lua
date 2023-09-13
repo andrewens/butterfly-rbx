@@ -7,7 +7,7 @@ local function isValidTask(value)
 	if typeof(value) == "table" then
 		return typeof(value.Destroy) == "function"
 	end
-	return typeof(value) == "function" or typeof(value) == "Instance"
+	return typeof(value) == "function" or typeof(value) == "Instance" or typeof(value) == "RBXScriptConnection"
 end
 local function assertIsValidTask(value)
 	if not isValidTask(value) then
@@ -20,6 +20,8 @@ local function doCleaning(self)
     for _, Task in pairs(self.__tasks) do
         if typeof(Task) == "function" then
             Task()
+		elseif typeof(Task) == "RBXScriptConnection" then
+			Task:Disconnect()
         else
             Task:Destroy()
         end
