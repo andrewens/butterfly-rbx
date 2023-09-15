@@ -31,10 +31,19 @@ local function initTestController(ScreenGui)
 	IndexLabel.Size = UDim2.new(1, 0, 0, 50)
 	IndexLabel.TextScaled = true
 	IndexLabel.Font = Enum.Font.GothamBlack
-	IndexLabel.Text = "ScreenGui!"
+
+	local DescLabel = IndexLabel:Clone()
+	DescLabel.Parent = ButtonContainer
+	DescLabel.Font = Enum.Font.Gotham
+	DescLabel.Position = UDim2.new(0, 0, 0, 50)
+	DescLabel.Size = UDim2.new(1, 0, 0, 200)
+	DescLabel.TextYAlignment = Enum.TextYAlignment.Top
+	DescLabel.TextSize = 30
+	DescLabel.TextScaled = false
 
 	GuiMaid(AppState:changed("testIndex", function(_, testIndex)
-		IndexLabel.Text = "TestIndex: " .. testIndex
+		IndexLabel.Text = " Test #" .. testIndex .. "/" .. #AppState.Tests
+		DescLabel.Text = (AppState.TestNames[testIndex] or "")
 	end))
 
 	-- control testIndex with buttons
@@ -195,12 +204,18 @@ local function extractTests(Instances, TestFunctions, TestNames)
 	]]
 
 	for _, ModuleScript in pairs(Instances) do
-		if ModuleScript:IsA("ModuleScript") then
+		-- must be a .spec file & return a function
+		local index = string.find(ModuleScript.Name, ".spec") 
+		if ModuleScript:IsA("ModuleScript") and index then
 			local testFunc = require(ModuleScript)
-			if typeof(testFunc) == "function" then
-				table.insert(TestFunctions, testFunc)
-				table.insert(TestNames, ModuleScript.Name)
+			if typeof(testFunc) ~= "function" then
+				continue
 			end
+			table.insert(TestFunctions, testFunc)
+
+			-- save the file name, but without the .spec
+			local testName = string.sub(ModuleScript.Name, 1, index - 1)
+			table.insert(TestNames, testName)
 		end
 		extractTests(ModuleScript:GetChildren(), TestFunctions, TestNames)
 	end

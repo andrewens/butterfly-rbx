@@ -4,7 +4,6 @@ local State = ProxyTable({
 	-- control
 	selectTestModal = false,
 	testIndex = 0,
-	numTests = 5,
 
 	-- data
 	Tests = {},
@@ -17,7 +16,7 @@ function State.nextTest()
 end
 function State.prevTest()
 	if State.testIndex == -1 then
-		State.selectTest(State.numTests)
+		State.selectTest(#State.Tests)
 		return
 	end
 	State.selectTest(State.testIndex - 1)
@@ -28,7 +27,7 @@ function State.selectTest(newTestIndex)
 	if newTestIndex < 0 then -- BEGIN
 		newTestIndex = 0
 	end
-	if newTestIndex > State.numTests then -- END
+	if newTestIndex > #State.Tests then -- END
 		newTestIndex = -1
 	end
 
