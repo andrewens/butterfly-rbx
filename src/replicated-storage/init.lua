@@ -25,7 +25,7 @@ local function initTestController(ScreenGui)
 	local GuiMaid = Maid()
 	GuiMaid(ButtonContainer)
 
-	-- render testIndex
+	-- render testIndex & testName
 	local IndexLabel = Instance.new("TextLabel")
 	IndexLabel.Parent = ButtonContainer
 	IndexLabel.Size = UDim2.new(1, 0, 0, 50)
@@ -62,6 +62,43 @@ local function initTestController(ScreenGui)
 	RightButton.AnchorPoint = Vector2.new(0, 1)
 	RightButton.Text = "NEXT >"
 	RightButton.Activated:Connect(AppState.nextTest)
+
+	-- pass/fail this test
+	local PassButton = LeftButton:Clone()
+	PassButton.Parent = ButtonContainer
+	PassButton.AnchorPoint = Vector2.new(1, 1)
+	PassButton.Position = UDim2.new(0.5, 0, 1, -100)
+	PassButton.TextColor3 = Color3.new(1, 1, 1)
+	PassButton.Activated:Connect(AppState.passThisTest)
+
+	local FailButton = RightButton:Clone()
+	FailButton.Parent = ButtonContainer
+	FailButton.Position = UDim2.new(0.5, 0, 1, -100)
+	FailButton.AnchorPoint = Vector2.new(0, 1)
+	FailButton.TextColor3 = Color3.new(1, 1, 1)
+	FailButton.Activated:Connect(AppState.failThisTest)
+
+	GuiMaid(AppState:changed("thisTestIsPassing", function(_, isPassing)
+		-- font
+		local font = if isPassing == nil then Enum.Font.GothamBold else Enum.Font.Gotham
+		PassButton.Font = font
+		FailButton.Font = font
+
+		-- text
+		PassButton.Text = if isPassing == true then "PASSING" else "PASS"
+		FailButton.Text = if isPassing == false then "FAILING" else "FAIL"
+
+		-- background color
+		if isPassing == nil then
+			PassButton.BackgroundColor3 = Color3.new(0, 1, 0)
+			FailButton.BackgroundColor3 = Color3.new(1, 0, 0)
+
+			return
+		end
+
+		PassButton.BackgroundColor3 = if isPassing then Color3.new(0, 0.8, 0) else Color3.new(0.5, 0.6, 0.5)
+		FailButton.BackgroundColor3 = if not isPassing then Color3.new(0.8, 0, 0) else Color3.new(0.6, 0.5, 0.5)
+	end))
 
 	-- button brings up selection modal
 	local SelectTestButton = Instance.new("TextButton")
@@ -253,6 +290,7 @@ local butterfly = {}
 function butterfly.run(TestContainers)
 	assert(typeof(TestContainers) == "table")
 	extractTests(TestContainers, AppState.Tests, AppState.TestNames)
+	AppState.clearTestResults()
 
 	-- temporary player gui lookup -- this should be specified by params of this method.
 	local Players = game:GetService("Players")

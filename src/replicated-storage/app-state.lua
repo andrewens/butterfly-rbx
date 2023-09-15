@@ -6,8 +6,10 @@ local State = ProxyTable({
 	testIndex = 0,
 
 	-- data
-	Tests = {},
-	TestNames = {},
+	Tests = {}, -- testIndex --> function
+	TestNames = {}, -- testIndex --> string
+	TestResults = {}, -- testIndex --> boolean, or nil
+	thisTestIsPassing = nil, -- boolean, or nil
 })
 
 -- control "testIndex"
@@ -32,6 +34,27 @@ function State.selectTest(newTestIndex)
 	end
 
 	State.testIndex = newTestIndex
+	State.thisTestIsPassing = State.TestResults[newTestIndex]
+end
+
+-- pass/fail tests (controls testIndex)
+function State.setThisTestResult(isPassing)
+	if State.testIndex < 1 then
+		return
+	end
+
+	State.TestResults[State.testIndex] = isPassing
+	State.thisTestIsPassing = isPassing
+end
+function State.clearTestResults()
+	State.TestResults = {}
+	State.thisTestIsPassing = nil
+end
+function State.passThisTest()
+	State.setThisTestResult(if State.thisTestIsPassing then nil else true)
+end
+function State.failThisTest()
+	State.setThisTestResult(if State.thisTestIsPassing == false then nil else false)
 end
 
 -- control "selectTestModal"
