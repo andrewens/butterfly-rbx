@@ -132,17 +132,23 @@ local function initTestSelectionModal(ScreenGui)
 		Background.Size = UDim2.new(1, 0, 1, 0)
 		ModalMaid(Background)
 
+		-- main elements
 		local TitleText = Instance.new("TextLabel")
 		TitleText.Parent = Background
 		TitleText.Size = UDim2.new(1, 0, 0, 100)
 		TitleText.Position = UDim2.new(0, 0, 0, 0)
 		TitleText.TextScaled = true
-		TitleText.Text = "ALL TESTS"
+		ModalMaid(AppState:changed("Tests", function(_, Tests)
+			TitleText.Text = "All tests (" .. #Tests .. ")"
+		end))
 
-		local TestContainer = Instance.new("ScrollingFrame")
-		TestContainer.Size = UDim2.new(1, -50, 1, -200)
-		TestContainer.Position = UDim2.new(0.5, 0, 1, -50)
-		TestContainer.AnchorPoint = Vector2.new(0.5, 1)
+		local SubtitleText = TitleText:Clone()
+		SubtitleText.Parent = Background
+		SubtitleText.Size = UDim2.new(1, 0, 0, 50)
+		SubtitleText.Position = UDim2.new(0, 0, 0, 100)
+		ModalMaid(AppState:changed("testIndex", function(_, testIndex)
+			SubtitleText.Text = "Currently Testing #" .. testIndex
+		end))
 
 		local ReturnButton = Instance.new("TextButton")
 		ReturnButton.Parent = Background
@@ -152,6 +158,46 @@ local function initTestSelectionModal(ScreenGui)
 		ReturnButton.TextScaled = true
 		ReturnButton.Text = "BACK"
 		ReturnButton.Activated:Connect(AppState.hideAllTests)
+
+		-- render every test
+		local TestContainer = Instance.new("ScrollingFrame")
+		TestContainer.Parent = Background
+		TestContainer.Size = UDim2.new(1, -100, 1, -220)
+		TestContainer.Position = UDim2.new(0.5, 0, 1, -70)
+		TestContainer.AnchorPoint = Vector2.new(0.5, 1)
+		TestContainer.CanvasSize = UDim2.new(0, 0, 0, #AppState.Tests * 40)
+
+		local ListLayout = Instance.new("UIListLayout")
+		ListLayout.Parent = TestContainer
+		for testIndex, testName in pairs(AppState.TestNames) do
+			local TestButton = Instance.new("TextButton")
+			TestButton.Parent = TestContainer
+			TestButton.LayoutOrder = testIndex
+			TestButton.TextXAlignment = Enum.TextXAlignment.Left
+			TestButton.TextScaled = true
+			TestButton.Size = UDim2.new(1, 0, 0, 40)
+			TestButton.Activated:Connect(function()
+				AppState.selectTest(testIndex)
+			end)
+
+			ModalMaid(AppState:changed("testIndex", function(_, currentTestIndex)
+				-- color
+				TestButton.BackgroundColor3 = if currentTestIndex == testIndex
+					then Color3.fromRGB(200, 200, 200)
+					else Color3.fromRGB(163, 162, 165)
+
+				-- text
+				local testIsPassing = AppState.TestResults[testIndex]
+				local testResultText = if testIsPassing ~= nil
+					then (if testIsPassing
+						then '  <font color="#00FF00">PASSING</font>'
+						else '  <font color="#FF0000">FAILING</font>')
+					else ""
+				local currentTestText = if currentTestIndex == testIndex then "  ← current" else ""
+				TestButton.RichText = true
+				TestButton.Text = "#" .. testIndex .. ": " .. testName .. testResultText .. currentTestText
+			end))
+		end
 	end))
 
 	return GuiMaid
