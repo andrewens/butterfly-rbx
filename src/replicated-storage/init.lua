@@ -8,6 +8,7 @@ end
 local Maid = require(script:FindFirstChild("maid"))
 local AppState = require(script:FindFirstChild("app-state"))
 
+-- private
 local function initTestController(ScreenGui)
 	--[[
 		Users use the TestController to label a test as "PASSED" or "FAILED"
@@ -185,16 +186,39 @@ local function initGui(GuiContainer)
 	return GuiMaid
 end
 
+local function extractTests(Instances, TestFunctions, TestNames)
+	--[[
+		Compiles list of test functions & list of test names from ModuleScripts,
+		given an array of Instances.
+		TestFunctions & TestNames are indexed by integers.
+		ModuleScripts must return a function to be added to the list.
+	]]
+
+	for _, ModuleScript in pairs(Instances) do
+		if ModuleScript:IsA("ModuleScript") then
+			local testFunc = require(ModuleScript)
+			if typeof(testFunc) == "function" then
+				table.insert(TestFunctions, testFunc)
+				table.insert(TestNames, ModuleScript.Name)
+			end
+		end
+		extractTests(ModuleScript:GetChildren(), TestFunctions, TestNames)
+	end
+end
+
 -- public
 local ButterflyMaid = Maid()
 local butterfly = {}
 
-function butterfly.run()
+function butterfly.run(TestContainers)
+	assert(typeof(TestContainers) == "table")
+	extractTests(TestContainers, AppState.Tests, AppState.TestNames)
+
 	-- temporary player gui lookup -- this should be specified by params of this method.
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-
 	ButterflyMaid(initGui(LocalPlayer.PlayerGui))
+
 	return ButterflyMaid
 end
 function butterfly.stop()

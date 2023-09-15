@@ -1,9 +1,14 @@
 local ProxyTable = require(script.Parent:FindFirstChild("proxy-table"))
 
 local State = ProxyTable({
+	-- control
 	selectTestModal = false,
 	testIndex = 0,
 	numTests = 5,
+
+	-- data
+	Tests = {},
+	TestNames = {},
 })
 
 -- control "testIndex"
