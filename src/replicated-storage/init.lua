@@ -205,7 +205,7 @@ local function extractTests(Instances, TestFunctions, TestNames)
 
 	for _, ModuleScript in pairs(Instances) do
 		-- must be a .spec file & return a function
-		local index = string.find(ModuleScript.Name, ".spec") 
+		local index = string.find(ModuleScript.Name, ".spec")
 		if ModuleScript:IsA("ModuleScript") and index then
 			local testFunc = require(ModuleScript)
 			if typeof(testFunc) ~= "function" then
@@ -220,6 +220,31 @@ local function extractTests(Instances, TestFunctions, TestNames)
 		extractTests(ModuleScript:GetChildren(), TestFunctions, TestNames)
 	end
 end
+local function initTestRunner()
+	--[[
+		Run the test module of the given testIndex when it changes
+	]]
+	local TestMaid = Maid()
+	local GuiMaid = Maid()
+	GuiMaid(TestMaid)
+	GuiMaid(AppState:changed("testIndex", function(_, testIndex)
+		TestMaid:DoCleaning()
+
+		-- there are no tests at testIndex=0 or testIndex=-1
+		local testFunction = AppState.Tests[testIndex]
+		if testFunction == nil then
+			return
+		end
+
+		-- tests can return a Maid or function to cleanup the test
+		local cleanupTest = testFunction()
+		if cleanupTest then
+			TestMaid(cleanupTest)
+		end
+	end))
+
+	return GuiMaid
+end
 
 -- public
 local ButterflyMaid = Maid()
@@ -232,7 +257,9 @@ function butterfly.run(TestContainers)
 	-- temporary player gui lookup -- this should be specified by params of this method.
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
+
 	ButterflyMaid(initGui(LocalPlayer.PlayerGui))
+	ButterflyMaid(initTestRunner())
 
 	return ButterflyMaid
 end
